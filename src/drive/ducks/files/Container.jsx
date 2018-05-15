@@ -1,13 +1,11 @@
 /* global __TARGET__ */
 import React from 'react'
 import { connect } from 'react-redux'
-import { showModal } from 'react-cozy-helpers'
 import { translate } from 'cozy-ui/react/I18n'
 import confirm from '../../lib/confirm'
 
 import FolderView from '../../components/FolderView'
 import DeleteConfirm from '../../components/DeleteConfirm'
-import { ShareModal } from '../../sharing'
 import Toolbar from './Toolbar'
 import { isRenaming, getRenamingFile, startRenamingAsync } from './rename'
 import { isFile, isReferencedByAlbum } from './files'
@@ -37,28 +35,15 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => {
-  const hasWriteAccess =
-    !ownProps.shared.withMe || ownProps.shared.sharingType === 'master-master'
+  // const hasWriteAccess =
+  //   !ownProps.shared.withMe || ownProps.shared.sharingType === 'master-master'
+  const hasWriteAccess = true
   return {
     actions: Object.assign({}, ownProps.actions, {
       list: {
         createFolder: name => dispatch(createFolder(name))
       },
       selection: {
-        share: {
-          action: selected =>
-            dispatch(
-              showModal(
-                <ShareModal
-                  document={selected[0]}
-                  documentType="Files"
-                  sharingDesc={selected[0].name}
-                />
-              )
-            ),
-          displayCondition: selections =>
-            hasWriteAccess && selections.length === 1
-        },
         download: {
           action: files => dispatch(downloadFiles(files))
         },
