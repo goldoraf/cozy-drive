@@ -2,6 +2,11 @@ import React, { Component } from 'react'
 import createReactContext from 'create-react-context'
 
 import { default as DumbSharedBadge } from './components/SharedBadge'
+import {
+  default as DumbShareButton,
+  SharedByMeButton,
+  SharedWithMeButton
+} from './components/ShareButton'
 
 const getPrimaryOrFirst = property => obj => {
   if (!obj[property] || obj[property].length === 0) return ''
@@ -23,24 +28,36 @@ export const getPrimaryCozy = contact =>
 export { default as ShareModal } from './ShareModal'
 export { default as SharingDetailsModal } from './SharingDetailsModal'
 
-export {
-  default as ShareButton,
-  SharedByMeButton,
-  SharedWithMeButton
-} from './components/ShareButton'
-
 const SharingContext = createReactContext()
 
 export default class SharingProvider extends Component {
-  state = {
-    sharings: {}
+  constructor(props, context) {
+    super(props, context)
+    this.state = {
+      shared: {},
+      documentType: props.documentType || 'Document'
+    }
   }
 
   componentDidMount() {
     this.context.client
       .collection('io.cozy.sharings')
       .findByDoctype(this.props.doctype)
-      .then(resp => this.setState(state => ({ ...state, sharings: resp.data })))
+      .then(resp => this.indexSharings(resp.data))
+  }
+
+  indexSharings(sharings) {
+    let sharedDocs = {}
+    sharings.forEach(s =>
+      s.attributes.rules.forEach(r =>
+        r.values.forEach(id => (sharedDocs[id] = s))
+      )
+    )
+    console.log(sharedDocs)
+    this.setState(state => ({
+      ...state,
+      shared: { ...state.shared, ...sharedDocs }
+    }))
   }
 
   render() {
@@ -54,12 +71,30 @@ export default class SharingProvider extends Component {
 
 export const SharedBadge = ({ docId, ...rest }) => (
   <SharingContext.Consumer>
-    {({ sharings }) => {
-      const sharing = sharings.find(s =>
-        s.attributes.rules.some(r => r.values.indexOf(docId) !== -1)
+    {({ shared }) =>
+      !shared[docId] ? null : (
+        <DumbSharedBadge byMe={shared[docId].owner} {...rest} />
       )
-      if (!sharing) return null
-      return <DumbSharedBadge byMe={sharing.owner} {...rest} />
     }}
+  </SharingContext.Consumer>
+)
+
+export const ShareButton = ({ docId, ...rest }, { t }) => (
+  <SharingContext.Consumer>
+    {({ shared, documentType }) =>
+      !shared[docId] ? (
+        <DumbShareButton label={t(`${documentType}.share.cta`)} {...rest} />
+      ) : shared[docId].owner ? (
+        <SharedByMeButton
+          label={t(`${documentType}.share.sharedByMe`)}
+          {...rest}
+        />
+      ) : (
+        <SharedWithMeButton
+          label={t(`${documentType}.share.sharedWithMe`)}
+          {...rest}
+        />
+      )
+    }
   </SharingContext.Consumer>
 )

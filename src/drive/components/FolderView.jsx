@@ -82,7 +82,7 @@ class FolderView extends Component {
     const toolbarActions = {}
     if (canCreateFolder) toolbarActions.addFolder = this.toggleAddFolder
     return (
-      <SharingProvider doctype="io.cozy.files">
+      <SharingProvider doctype="io.cozy.files" documentType="Files">
         <Main working={isNavigating}>
           <Topbar>
             <Breadcrumb />

@@ -23,14 +23,8 @@ import {
   downloadFiles,
   trashFiles
 } from '../../actions'
-import {
-  ShareButton,
-  SharedWithMeButton,
-  SharedByMeButton,
-  ShareModal,
-  SharingDetailsModal
-} from '../../sharing'
-import { leave, getSharingDetails } from 'cozy-client'
+import { ShareButton, ShareModal, SharingDetailsModal } from 'sharing'
+import { leave } from 'cozy-client'
 
 const { BarRight } = cozy.bar
 
@@ -50,7 +44,11 @@ class Toolbar extends Component {
     const {
       t,
       disabled,
-      shared,
+      shared = {
+        withMe: false,
+        byMe: false,
+        byLink: false
+      },
       displayedFolder,
       actions,
       onSelectItemsClick,
@@ -62,8 +60,9 @@ class Toolbar extends Component {
       breakpoints: { isMobile }
     } = this.props
     const notRootfolder = displayedFolder && displayedFolder.id !== ROOT_DIR_ID
-    const hasWriteAccess =
-      canUpload && (!shared.withMe || shared.sharingType === 'master-master')
+    // const hasWriteAccess =
+    //   canUpload && (!shared.withMe || shared.sharingType === 'master-master')
+    const hasWriteAccess = canUpload
 
     const MoreMenu = (
       <Menu
@@ -184,7 +183,7 @@ class Toolbar extends Component {
             className={classNames(styles['c-btn'], styles['u-hide--mob'])}
           />
         )}
-        {notRootfolder &&
+        {/* notRootfolder &&
           !(shared.withMe || shared.byMe || shared.byLink) && (
             <ShareButton
               disabled={disabled}
@@ -207,7 +206,15 @@ class Toolbar extends Component {
               onClick={() => this.setState(toggleShowShareModal)}
               className={styles['u-hide--mob']}
             />
-          ))}
+          )) */}
+        {notRootfolder && (
+          <ShareButton
+            docId={displayedFolder.id}
+            disabled={disabled}
+            onClick={() => this.setState(toggleShowShareModal)}
+            className={styles['u-hide--mob']}
+          />
+        )}
 
         {isMobile ? <BarRight>{MoreMenu}</BarRight> : MoreMenu}
 
@@ -235,8 +242,7 @@ class Toolbar extends Component {
 }
 
 const mapStateToProps = (state, ownProps) => ({
-  displayedFolder: state.view.displayedFolder,
-  shared: getSharingDetails(state, 'io.cozy.files', ownProps.folderId)
+  displayedFolder: state.view.displayedFolder
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
