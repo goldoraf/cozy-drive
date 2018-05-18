@@ -41,7 +41,9 @@ const Status = translate()(
     <div className={styles['pho-recipient-status']}>
       {revoking && <Spinner />}
       {!revoking &&
-        status && (
+        status === 'owner' && <span>{t(`Share.status.${status}`)}</span>}
+      {!revoking &&
+        status !== 'owner' && (
           <Menu
             title={
               status === 'accepted' && type
@@ -79,14 +81,12 @@ class Recipient extends Component {
   }
 
   render() {
-    const { contact } = this.props
+    const { instance, name } = this.props
     const { revoking } = this.state
-    const name = getPrimaryEmail(contact)
-    const url = getPrimaryCozy(contact)
     return (
       <div className={styles['pho-recipient']}>
         <Avatar name={name} />
-        <Identity name={name} url={url} />
+        <Identity name={name} url={instance} />
         <Status
           {...this.props}
           revoking={revoking}
@@ -98,3 +98,14 @@ class Recipient extends Component {
 }
 
 export default Recipient
+
+export const Contact = ({ contact }) => {
+  const name = getPrimaryEmail(contact)
+  const url = getPrimaryCozy(contact)
+  return (
+    <div className={styles['pho-recipient']}>
+      <Avatar name={name} />
+      <Identity name={name} url={url} />
+    </div>
+  )
+}

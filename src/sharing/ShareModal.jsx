@@ -1,14 +1,14 @@
 import styles from './share.styl'
 
 import React, { Component } from 'react'
-import { Query } from 'cozy-client'
 import PropTypes from 'prop-types'
 import Modal from 'cozy-ui/react/Modal'
 import { getTracker } from 'cozy-ui/react/helpers/tracker'
-import Alerter from 'legacy-alerter/Alerter'
+import Alerter from 'cozy-ui/react/Alerter'
 
 import { default as DumbShareByLink } from './components/ShareByLink'
 import { default as DumbShareByEmail } from './components/ShareByEmail'
+import WhoHasAccess from './components/WhoHasAccess'
 
 require('url-polyfill')
 
@@ -135,89 +135,11 @@ class ShareByLink extends Component {
   }
 }
 
-class ShareByEmail extends Component {
-  share = (document, recipients, sharingType, description) => {
-    return Promise.all(
-      recipients.map(
-        recipient =>
-          recipient.id
-            ? recipient
-            : this.props
-                .createContact('io.cozy.contacts', {
-                  email: [{ address: recipient.email, primary: true }]
-                })
-                .then(resp => resp.data)
-      )
-    ).then(recipients =>
-      this.collection(document).share(
-        document,
-        recipients,
-        sharingType,
-        description
-      )
-    )
-  }
-
-  unshare = () => {}
-
-  collection(document) {
-    return this.context.client.collection(document._type)
-  }
-
-  render() {
-    const {
-      document,
-      documentType,
-      sharingDesc,
-      recipients = [],
-      contacts
-    } = this.props
-    return (
-      <DumbShareByEmail
-        document={document}
-        documentType={documentType}
-        recipients={recipients}
-        contacts={contacts}
-        sharingDesc={sharingDesc}
-        onShare={this.share}
-        onUnshare={this.unshare}
-      />
-    )
-  }
-}
-
 const ShareByEmailComingSoon = shunt(
   displayShareEmail,
-  ShareByEmail,
+  DumbShareByEmail,
   ComingSoon
 )
-
-class ModalContent extends Component {
-  render() {
-    const { t } = this.context
-    const { sharingDesc, document, documentType = 'Document' } = this.props
-
-    return (
-      <div className={styles['share-modal-content']}>
-        {withSharingCheck(document, documentType, t)(
-          <Query query={cozy => cozy.all('io.cozy.contacts')}>
-            {({ data }, { createDocument }) => (
-              <ShareByEmailComingSoon
-                document={document}
-                documentType={documentType}
-                sharingDesc={sharingDesc}
-                contacts={data}
-                createContact={createDocument}
-              />
-            )}
-          </Query>
-        )}
-        <hr className={styles['divider']} />
-        <ShareByLink document={document} documentType={documentType} />
-      </div>
-    )
-  }
-}
 
 // TODO: implements
 const isSearchParam = value => {
@@ -278,11 +200,20 @@ const withSharingCheck = ({ id, type }, documentType, t) => BaseComponent => {
   )
 }
 
-export class ShareModal extends Component {
+export default class ShareModal extends Component {
   render() {
     const { t } = this.context
-    const { onClose, document, documentType = 'Document' } = this.props
-
+    const {
+      document,
+      sharingDesc,
+      contacts,
+      createContact,
+      recipients,
+      documentType = 'Document',
+      onClose,
+      onShare,
+      onRevoke
+    } = this.props
     return (
       <Modal
         title={t(`${documentType}.share.title`)}
@@ -290,10 +221,38 @@ export class ShareModal extends Component {
         className={styles['share-modal']}
         into="body"
       >
-        <ModalContent document={document} documentType={documentType} />
+        <div className={styles['share-modal-content']}>
+          {withSharingCheck(document, documentType, t)(
+            <ShareByEmailComingSoon
+              document={document}
+              documentType={documentType}
+              sharingDesc={sharingDesc}
+              contacts={contacts}
+              createContact={createContact}
+              onShare={onShare}
+            />
+          )}
+          <hr className={styles['divider']} />
+          <ShareByLink document={document} documentType={documentType} />
+          <WhoHasAccess
+            recipients={recipients}
+            documentType={documentType}
+            onUnshare={onRevoke}
+          />
+        </div>
       </Modal>
     )
   }
 }
 
-export default ShareModal
+ShareModal.propTypes = {
+  document: PropTypes.object.isRequired,
+  sharingDesc: PropTypes.string,
+  contacts: PropTypes.array.isRequired,
+  createContact: PropTypes.func.isRequired,
+  recipients: PropTypes.array.isRequired,
+  documentType: PropTypes.string,
+  onClose: PropTypes.func.isRequired,
+  onShare: PropTypes.func.isRequired,
+  onRevoke: PropTypes.func.isRequired
+}

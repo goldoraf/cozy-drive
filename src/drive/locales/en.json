@@ -47,8 +47,9 @@
   },
   "Share": {
     "status": {
+      "owner": "Owner",
       "pending": "Pending",
-      "accepted": "Accepted",
+      "ready": "Accepted",
       "refused": "Refused",
       "error": "Error",
       "unregistered": "Error",
