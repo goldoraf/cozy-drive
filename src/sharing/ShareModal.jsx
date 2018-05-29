@@ -236,6 +236,7 @@ export default class ShareModal extends Component {
           <ShareByLink document={document} documentType={documentType} />
           <WhoHasAccess
             recipients={recipients}
+            document={document}
             documentType={documentType}
             onUnshare={onRevoke}
           />

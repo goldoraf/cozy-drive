@@ -76,7 +76,7 @@ class Recipient extends Component {
   onUnshare = () => {
     this.setState(state => ({ revoking: true }))
     this.props
-      .onUnshare(this.props.contact)
+      .onUnshare(this.props.document, this.props.email)
       .then(() => this.setState(state => ({ revoking: false })))
   }
 

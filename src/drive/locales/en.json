@@ -53,7 +53,7 @@
       "refused": "Refused",
       "error": "Error",
       "unregistered": "Error",
-      "mail-not-sent": "Error",
+      "mail-not-sent": "Pending",
       "revoked": "Error"
     },
     "type": {

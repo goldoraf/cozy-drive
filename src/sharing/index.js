@@ -2,6 +2,15 @@ import React, { Component } from 'react'
 import createReactContext from 'create-react-context'
 import { Query } from 'cozy-client'
 
+import reducer, {
+  receiveSharings,
+  addSharing,
+  revokeRecipient,
+  isOwner,
+  getRecipients,
+  getSharingForRecipient
+} from './state'
+
 import { default as DumbSharedBadge } from './components/SharedBadge'
 import {
   default as DumbShareButton,
@@ -35,77 +44,52 @@ export default class SharingProvider extends Component {
   constructor(props, context) {
     super(props, context)
     this.state = {
-      shared: {},
+      byDocId: {},
+      sharings: [],
       documentType: props.documentType || 'Document',
-      isOwner: this.isOwner,
-      getRecipients: this.getRecipients,
+      isOwner: docId => isOwner(this.state, docId),
+      getRecipients: docId => getRecipients(this.state, docId),
       share: this.share,
       revoke: this.revoke
     }
   }
 
+  dispatch = action =>
+    this.setState(state => ({ ...state, ...reducer(state, action) }))
+
   componentDidMount() {
     this.context.client
       .collection('io.cozy.sharings')
       .findByDoctype(this.props.doctype)
-      .then(resp => this.indexSharings(resp.data))
-  }
-
-  isOwner = docId =>
-    this.state.shared[docId][0] && this.state.shared[docId][0].owner === true
-
-  getRecipients = docId => {
-    const recipients = !this.state.shared[docId]
-      ? []
-      : this.state.shared[docId]
-          .map(s => {
-            const rule = s.rules.find(r => r.values.indexOf(docId) !== -1)
-            const type =
-              rule.update === 'sync' && rule.remove === 'sync'
-                ? 'two-way'
-                : 'one-way'
-            return s.members.map(m => ({ ...m, type }))
-          })
-          .reduce((m, acc) => acc.concat(m), [])
-    return recipients
+      .then(resp => this.dispatch(receiveSharings(resp.data)))
   }
 
   share = async (document, recipients, sharingType, description) => {
     const resp = await this.context.client
       .collection('io.cozy.sharings')
       .share(document, recipients, sharingType, description)
-    console.log(resp.data)
+    this.dispatch(addSharing(resp.data))
     return resp.data
   }
 
-  revoke = () => {}
-
-  collection(document) {
-    return this.context.client.collection(document._type)
-  }
-
-  indexSharings(sharings) {
-    let sharedDocs = {}
-    sharings.forEach(s =>
-      s.rules.forEach(r =>
-        r.values.forEach(id => {
-          if (sharedDocs[id]) {
-            sharedDocs[id].push(s)
-          } else {
-            sharedDocs[id] = [s]
-          }
-        })
-      )
+  revoke = async (document, recipientEmail) => {
+    const sharing = getSharingForRecipient(
+      this.state,
+      document.id,
+      recipientEmail
     )
-    this.setState(state => ({
-      ...state,
-      shared: { ...state.shared, ...sharedDocs }
-    }))
+    await this.context.client
+      .collection('io.cozy.sharings')
+      .revokeRecipient(sharing, recipientEmail)
+    this.dispatch(revokeRecipient(sharing, recipientEmail))
   }
 
   render() {
+    // WARN: whe shouldn't do this (https://reactjs.org/docs/context.html#caveats)
+    // but if we don't, consumers don't rerender when the state changes after loading the sharings,
+    // probably because the state object remains the same...
     return (
-      <SharingContext.Provider value={this.state}>
+      <SharingContext.Provider value={{ ...this.state }}>
         {this.props.children}
       </SharingContext.Provider>
     )
@@ -114,18 +98,18 @@ export default class SharingProvider extends Component {
 
 export const SharedBadge = ({ docId, ...rest }) => (
   <SharingContext.Consumer>
-    {({ shared, isOwner }) =>
-      !shared[docId] ? null : (
+    {({ byDocId, isOwner }) => {
+      return !byDocId[docId] ? null : (
         <DumbSharedBadge byMe={isOwner(docId)} {...rest} />
       )
-    }}
+    }}}
   </SharingContext.Consumer>
 )
 
 export const ShareButton = ({ docId, ...rest }, { t }) => (
   <SharingContext.Consumer>
-    {({ shared, documentType, isOwner }) =>
-      !shared[docId] ? (
+    {({ byDocId, documentType, isOwner }) =>
+      !byDocId[docId] ? (
         <DumbShareButton label={t(`${documentType}.share.cta`)} {...rest} />
       ) : isOwner(docId) ? (
         <SharedByMeButton
