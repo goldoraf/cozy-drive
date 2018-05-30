@@ -6,9 +6,13 @@ import reducer, {
   receiveSharings,
   addSharing,
   revokeRecipient,
+  revokeSelf,
   isOwner,
+  getOwner,
   getRecipients,
-  getSharingForRecipient
+  getSharingForRecipient,
+  getSharingForSelf,
+  getSharingType
 } from './state'
 
 import { default as DumbSharedBadge } from './components/SharedBadge'
@@ -18,6 +22,7 @@ import {
   SharedWithMeButton
 } from './components/ShareButton'
 import { default as DumbShareModal } from './ShareModal'
+import { SharingDetailsModal } from './SharingDetailsModal'
 
 const getPrimaryOrFirst = property => obj => {
   if (!obj[property] || obj[property].length === 0) return ''
@@ -48,9 +53,12 @@ export default class SharingProvider extends Component {
       sharings: [],
       documentType: props.documentType || 'Document',
       isOwner: docId => isOwner(this.state, docId),
+      getOwner: docId => getOwner(this.state, docId),
+      getSharingType: docId => getSharingType(this.state, docId),
       getRecipients: docId => getRecipients(this.state, docId),
       share: this.share,
-      revoke: this.revoke
+      revoke: this.revoke,
+      revokeSelf: this.revokeSelf
     }
   }
 
@@ -82,6 +90,12 @@ export default class SharingProvider extends Component {
       .collection('io.cozy.sharings')
       .revokeRecipient(sharing, recipientEmail)
     this.dispatch(revokeRecipient(sharing, recipientEmail))
+  }
+
+  revokeSelf = async document => {
+    const sharing = getSharingForSelf(this.state, document.id)
+    await this.context.client.collection('io.cozy.sharings').revokeSelf(sharing)
+    this.dispatch(revokeSelf(sharing))
   }
 
   render() {
@@ -126,7 +140,7 @@ export const ShareButton = ({ docId, ...rest }, { t }) => (
   </SharingContext.Consumer>
 )
 
-export const ShareModal = ({ document, ...rest }) => (
+const OwnerSharingModal = ({ document, ...rest }) => (
   <SharingContext.Consumer>
     {({ documentType, getRecipients, share, revoke }) => (
       <Query query={cozy => cozy.all('io.cozy.contacts')}>
@@ -144,5 +158,39 @@ export const ShareModal = ({ document, ...rest }) => (
         )}
       </Query>
     )}
+  </SharingContext.Consumer>
+)
+
+const SharingModal = ({ document, ...rest }) => (
+  <SharingContext.Consumer>
+    {({
+      documentType,
+      getOwner,
+      getSharingType,
+      getRecipients,
+      revokeSelf
+    }) => (
+      <SharingDetailsModal
+        document={document}
+        documentType={documentType}
+        owner={getOwner(document.id)}
+        sharingType={getSharingType(document.id)}
+        recipients={getRecipients(document.id)}
+        onRevoke={revokeSelf}
+        {...rest}
+      />
+    )}
+  </SharingContext.Consumer>
+)
+
+export const ShareModal = ({ document, ...rest }) => (
+  <SharingContext.Consumer>
+    {({ byDocId, isOwner }) =>
+      !byDocId[document.id] || isOwner(document.id) ? (
+        <OwnerSharingModal document={document} {...rest} />
+      ) : (
+        <SharingModal document={document} {...rest} />
+      )
+    }
   </SharingContext.Consumer>
 )

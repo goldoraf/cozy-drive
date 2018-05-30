@@ -96,7 +96,6 @@ const FileName = ({
   opening,
   withFilePath,
   isMobile,
-  shared,
   formattedSize,
   formattedUpdatedAt
 }) => {

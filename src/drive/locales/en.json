@@ -57,7 +57,7 @@
       "revoked": "Error"
     },
     "type": {
-      "one-way": "Can View (coming soon)",
+      "one-way": "Can View",
       "two-way": "Can Change"
     },
     "create-cozy": "Create my cozy"
@@ -88,9 +88,13 @@
         "comingsoon":
           "Coming soon! You will be able to share documents and photos in a single click with your family, your friends, and even your coworkers. Don't worry, we'll let you know when it's ready!"
       },
-      "unshare": {
+      "revoke": {
         "title": "Remove from sharing",
         "success": "You removed this shared file from %{email}."
+      },
+      "revokeSelf": {
+        "title": "Remove me from sharing",
+        "success": "You were removed from this sharing."
       },
       "sharingLink": {
         "title": "Link to share",

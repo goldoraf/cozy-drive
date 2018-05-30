@@ -2,7 +2,6 @@ import styles from './recipient.styl'
 
 import React, { Component } from 'react'
 import classNames from 'classnames'
-import { translate } from 'cozy-ui/react/I18n'
 import Spinner from 'cozy-ui/react/Spinner'
 import ColorHash from './colorhash'
 import Menu, { Item } from 'components/Menu'
@@ -36,66 +35,69 @@ export const UserAvatar = ({ name, url }) => (
   </div>
 )
 
-const Status = translate()(
-  ({ t, revoking, status, type, documentType, onUnshare }) => (
-    <div className={styles['pho-recipient-status']}>
-      {revoking && <Spinner />}
-      {!revoking &&
-        status === 'owner' && <span>{t(`Share.status.${status}`)}</span>}
-      {!revoking &&
-        status !== 'owner' && (
-          <Menu
-            title={
-              status === 'accepted' && type
-                ? t(`Share.type.${type}`)
-                : t(`Share.status.${status}`)
-            }
-            className={styles['pho-recipient-menu']}
-            buttonClassName={styles['pho-recipient-menu-btn']}
-            disabled={status === 'pending'}
-          >
-            <Item>
-              <a
-                className={classNames(styles['pho-action-unshare'])}
-                onClick={onUnshare}
-              >
-                {t(`${documentType}.share.unshare.title`)}
-              </a>
-            </Item>
-          </Menu>
-        )}
-    </div>
-  )
-)
-
-class Recipient extends Component {
+class Status extends Component {
   state = {
     revoking: false
   }
 
-  onUnshare = () => {
+  onRevoke = async () => {
+    const { onRevoke, document, email } = this.props
     this.setState(state => ({ revoking: true }))
-    this.props
-      .onUnshare(this.props.document, this.props.email)
-      .then(() => this.setState(state => ({ revoking: false })))
+    await onRevoke(document, email)
+    this.setState(state => ({ revoking: false }))
   }
 
   render() {
-    const { instance, name } = this.props
+    const { isOwner, status, instance, type, documentType } = this.props
+    const { t } = this.context
     const { revoking } = this.state
+    const isMe = instance !== undefined && !isOwner
     return (
-      <div className={styles['pho-recipient']}>
-        <Avatar name={name} />
-        <Identity name={name} url={instance} />
-        <Status
-          {...this.props}
-          revoking={revoking}
-          onUnshare={this.onUnshare}
-        />
+      <div className={styles['pho-recipient-status']}>
+        {revoking && <Spinner />}
+        {!revoking &&
+          status === 'owner' && <span>{t(`Share.status.${status}`)}</span>}
+        {!revoking &&
+          status !== 'owner' &&
+          !isMe &&
+          !isOwner && <span>{t(`Share.status.${status}`)}</span>}
+        {!revoking &&
+          status !== 'owner' &&
+          (isMe || isOwner) && (
+            <Menu
+              title={
+                status === 'ready' && type
+                  ? t(`Share.type.${type}`)
+                  : t(`Share.status.${status}`)
+              }
+              className={styles['pho-recipient-menu']}
+              buttonClassName={styles['pho-recipient-menu-btn']}
+              disabled={status === 'pending'}
+            >
+              <Item>
+                <a
+                  className={classNames(styles['pho-action-unshare'])}
+                  onClick={this.onRevoke}
+                >
+                  {isOwner
+                    ? t(`${documentType}.share.revoke.title`)
+                    : t(`${documentType}.share.revokeSelf.title`)}
+                </a>
+              </Item>
+            </Menu>
+          )}
       </div>
     )
   }
 }
+
+const Recipient = ({ instance, name, ...rest }) => (
+  <div className={styles['pho-recipient']}>
+    <Avatar name={name} />
+    <Identity name={name} url={instance} />
+    <Status instance={instance} {...rest} />
+  </div>
+)
 
 export default Recipient
 

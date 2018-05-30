@@ -2,16 +2,23 @@ import React from 'react'
 
 import Recipient from './Recipient'
 
-const WhoHasAccess = ({ recipients, document, documentType, onUnshare }) => (
+const WhoHasAccess = ({
+  isOwner = false,
+  recipients,
+  document,
+  documentType,
+  onRevoke
+}) => (
   <div>
     {recipients
       .filter(r => r.status !== 'revoked')
       .map(recipient => (
         <Recipient
           {...recipient}
+          isOwner={isOwner}
           document={document}
           documentType={documentType}
-          onUnshare={onUnshare}
+          onRevoke={onRevoke}
         />
       ))}
   </div>

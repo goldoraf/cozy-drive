@@ -1,38 +1,53 @@
 import styles from './share.styl'
 
 import React, { Component } from 'react'
-import { UserAvatar } from './components/Recipient'
-import Modal from 'cozy-ui/react/Modal'
+import { UserAvatar as Owner } from './components/Recipient'
+import WhoHasAccess from './components/WhoHasAccess'
 
-const Owner = UserAvatar
+import Modal from 'cozy-ui/react/Modal'
 
 export class SharingDetailsModal extends Component {
   render() {
     const { t, f } = this.context
-    const { onClose, sharing, document, documentType = 'Document' } = this.props
+    const {
+      onClose,
+      sharingType,
+      owner,
+      recipients,
+      document,
+      documentType = 'Document',
+      onRevoke
+    } = this.props
     return (
       <Modal
         title={t(`${documentType}.share.details.title`)}
         secondaryAction={onClose}
+        className={styles['share-modal']}
         into="body"
       >
-        <div className={styles['pho-share-modal-content']}>
+        <div className={styles['share-modal-content']}>
           <Owner
             name={t(`${documentType}.share.sharedWithMe`)}
-            url={sharing.sharer.url}
+            url={owner.instance}
           />
-          <div className={styles['pho-share-details-created']}>
+          <div className={styles['share-details-created']}>
             {t(`${documentType}.share.details.createdAt`, {
               date: f(document.created_at || null, 'Do MMMM YYYY')
             })}
           </div>
-          <div className={styles['pho-share-details-perm']}>
+          <div className={styles['share-details-perm']}>
             {t(
               `${documentType}.share.details.${
-                sharing.sharingType === 'one-way' ? 'ro' : 'rw'
+                sharingType === 'one-way' ? 'ro' : 'rw'
               }`
             )}
           </div>
+          <WhoHasAccess
+            recipients={recipients}
+            document={document}
+            documentType={documentType}
+            onRevoke={onRevoke}
+          />
         </div>
       </Modal>
     )

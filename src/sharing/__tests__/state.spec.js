@@ -2,7 +2,8 @@ import reducer, {
   receiveSharings,
   addSharing,
   getRecipients,
-  revokeRecipient
+  revokeRecipient,
+  revokeSelf
 } from '../state'
 
 import { SHARING_1, SHARING_2, SHARING_3 } from './fixtures'
@@ -41,6 +42,16 @@ describe('Sharing state', () => {
       revokeRecipient(SHARING_1, 'john@doe.com')
     )
     expect(state.sharings[0].attributes.members).toHaveLength(1)
+  })
+
+  it('should revoke self', () => {
+    const state = reducer(
+      reducer(undefined, receiveSharings([SHARING_1, SHARING_2])),
+      revokeSelf(SHARING_1)
+    )
+    expect(state.byDocId).toEqual({
+      folder_2: [SHARING_2.id]
+    })
   })
 
   describe('selectors', () => {

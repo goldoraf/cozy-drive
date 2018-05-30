@@ -235,10 +235,11 @@ export default class ShareModal extends Component {
           <hr className={styles['divider']} />
           <ShareByLink document={document} documentType={documentType} />
           <WhoHasAccess
+            isOwner
             recipients={recipients}
             document={document}
             documentType={documentType}
-            onUnshare={onRevoke}
+            onRevoke={onRevoke}
           />
         </div>
       </Modal>
