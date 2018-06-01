@@ -6,6 +6,11 @@ import React from 'react'
 import { render } from 'react-dom'
 import IntentHandler from 'drive/ducks/services'
 import { I18n } from 'cozy-ui/react/I18n'
+<<<<<<< HEAD
+=======
+import CozyClient, { CozyProvider } from 'cozy-client'
+import configureStore from 'drive/store/configureStore'
+>>>>>>> fix: Fixed various Drive intents issues: missing icons in the search suggestions and the usage of the old cozy-client
 
 if (__DEVELOPMENT__) {
   // Enables React dev tools for Preact
