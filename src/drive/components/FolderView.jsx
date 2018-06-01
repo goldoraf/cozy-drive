@@ -2,7 +2,6 @@
 import React, { Component } from 'react'
 import { translate } from 'cozy-ui/react/I18n'
 import Alerter from 'cozy-ui/react/Alerter'
-import SharingProvider from 'sharing'
 
 import Main from './Main'
 import Topbar from './Topbar'
@@ -82,72 +81,67 @@ class FolderView extends Component {
     const toolbarActions = {}
     if (canCreateFolder) toolbarActions.addFolder = this.toggleAddFolder
     return (
-      <SharingProvider doctype="io.cozy.files" documentType="Files">
-        <Main working={isNavigating}>
-          <Topbar>
-            <Breadcrumb />
-            <Toolbar
-              folderId={folderId}
-              actions={toolbarActions}
-              canUpload={canUpload}
-              disabled={
-                fetchFailed ||
-                fetchPending ||
-                selectionModeActive ||
-                nothingToDo
-              }
-              onSelectItemsClick={showSelectionBar}
-            />
-          </Topbar>
-          <Dropzone
-            role="contentinfo"
-            disabled={__TARGET__ === 'mobile' || !canDrop}
-            displayedFolder={displayedFolder}
-            onDrop={uploadFiles}
-          >
-            {__TARGET__ === 'mobile' && (
-              <div>
-                {isRootfolder && <MediaBackupProgression />}
-                <FirstUploadModal />
-                <RatingModal />
-              </div>
-            )}
-            <div style={{ display: selectionModeActive ? 'inherit' : 'none' }}>
-              <SelectionBar selected={selected} actions={actions.selection} />
+      <Main working={isNavigating}>
+        <Topbar>
+          <Breadcrumb />
+          <Toolbar
+            folderId={folderId}
+            actions={toolbarActions}
+            canUpload={canUpload}
+            disabled={
+              fetchFailed || fetchPending || selectionModeActive || nothingToDo
+            }
+            onSelectItemsClick={showSelectionBar}
+          />
+        </Topbar>
+        <Dropzone
+          role="contentinfo"
+          disabled={__TARGET__ === 'mobile' || !canDrop}
+          displayedFolder={displayedFolder}
+          onDrop={uploadFiles}
+        >
+          {__TARGET__ === 'mobile' && (
+            <div>
+              {isRootfolder && <MediaBackupProgression />}
+              <FirstUploadModal />
+              <RatingModal />
             </div>
+          )}
+          <div style={{ display: selectionModeActive ? 'inherit' : 'none' }}>
+            <SelectionBar selected={selected} actions={actions.selection} />
+          </div>
 
-            <div className={styles['fil-content-table']} role="table">
-              {__TARGET__ !== 'mobile' && ( // temporary disabling of sorting on mobile because of perf issues
-                <MobileFileListHeader canSort={canSort} />
-              )}
-              <FileListHeader canSort={canSort} />
-              <div className={styles['fil-content-body']}>
-                {showAddFolder && (
-                  <AddFolder
-                    onSubmit={this.createFolder}
-                    onAbort={this.abortAddFolder}
-                  />
-                )}
-                <FolderContent
-                  {...this.props}
-                  selectionModeActive={selectionModeActive}
-                  isAddingFolder={showAddFolder}
-                  isLoading={fetchPending || isNavigating}
-                  isInError={fetchFailed}
-                />
-              </div>
-            </div>
-            {this.renderViewer(children)}
-            {actionMenuActive && (
-              <FileActionMenu
-                files={actionable}
-                actions={actions.selection}
-                onClose={hideActionMenu}
-              />
+          <div className={styles['fil-content-table']} role="table">
+            {__TARGET__ !== 'mobile' && ( // temporary disabling of sorting on mobile because of perf issues
+              <MobileFileListHeader canSort={canSort} />
             )}
-          </Dropzone>
-        </Main>
-      </SharingProvider>
+            <FileListHeader canSort={canSort} />
+            <div className={styles['fil-content-body']}>
+              {showAddFolder && (
+                <AddFolder
+                  onSubmit={this.createFolder}
+                  onAbort={this.abortAddFolder}
+                />
+              )}
+              <FolderContent
+                {...this.props}
+                selectionModeActive={selectionModeActive}
+                isAddingFolder={showAddFolder}
+                isLoading={fetchPending || isNavigating}
+                isInError={fetchFailed}
+              />
+            </div>
+          </div>
+          {this.renderViewer(children)}
+          {actionMenuActive && (
+            <FileActionMenu
+              files={actionable}
+              actions={actions.selection}
+              onClose={hideActionMenu}
+            />
+          )}
+        </Dropzone>
+      </Main>
     )
   }
 

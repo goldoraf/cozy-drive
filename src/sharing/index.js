@@ -23,6 +23,7 @@ import {
 } from './components/ShareButton'
 import { default as DumbShareModal } from './ShareModal'
 import { SharingDetailsModal } from './SharingDetailsModal'
+import { RecipientsAvatars } from './components/Recipient'
 
 const getPrimaryOrFirst = property => obj => {
   if (!obj[property] || obj[property].length === 0) return ''
@@ -40,8 +41,6 @@ export const getPrimaryCozy = contact =>
   Array.isArray(contact.cozy)
     ? getPrimaryOrFirst('cozy')(contact).url
     : contact.url
-
-export { default as SharingDetailsModal } from './SharingDetailsModal'
 
 const SharingContext = createReactContext()
 
@@ -110,13 +109,56 @@ export default class SharingProvider extends Component {
   }
 }
 
+export const SharedDocument = ({ docId, children }) => (
+  <SharingContext.Consumer>
+    {({ byDocId, isOwner, getSharingType, revokeSelf } = {}) =>
+      children({
+        hasWriteAccess:
+          !byDocId ||
+          !byDocId[docId] ||
+          isOwner(docId) ||
+          getSharingType(docId) === 'two-way',
+        isShared: byDocId !== undefined && byDocId[docId],
+        isSharedByMe: byDocId !== undefined && byDocId[docId] && isOwner(docId),
+        isSharedWithMe:
+          byDocId !== undefined && byDocId[docId] && !isOwner(docId),
+        onLeave: revokeSelf
+      })
+    }}
+  </SharingContext.Consumer>
+)
+
+export const SharedStatus = ({ docId, className }, { t }) => (
+  <SharingContext.Consumer>
+    {({ byDocId, isOwner } = {}) => (
+      <span className={className}>
+        {!byDocId || !byDocId[docId]
+          ? '—'
+          : isOwner(docId)
+            ? t('Files.share.sharedByMe')
+            : t('Files.share.sharedWithMe')}
+      </span>
+    )}}
+  </SharingContext.Consumer>
+)
+
 export const SharedBadge = ({ docId, ...rest }) => (
   <SharingContext.Consumer>
-    {({ byDocId, isOwner }) => {
-      return !byDocId[docId] ? null : (
+    {({ byDocId, isOwner } = {}) =>
+      !byDocId || !byDocId[docId] ? null : (
         <DumbSharedBadge byMe={isOwner(docId)} {...rest} />
       )
-    }}}
+    }}
+  </SharingContext.Consumer>
+)
+
+export const SharedRecipients = ({ docId, ...rest }) => (
+  <SharingContext.Consumer>
+    {({ byDocId, getRecipients } = {}) =>
+      !byDocId || !byDocId[docId] ? null : (
+        <RecipientsAvatars recipients={getRecipients(docId).reverse()} />
+      )
+    }}
   </SharingContext.Consumer>
 )
 

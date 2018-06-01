@@ -90,7 +90,7 @@ class ShareByEmail extends Component {
     {
       value: 'one-way',
       label: this.context.t('Share.type.one-way'),
-      disabled: true
+      disabled: false
     },
     {
       value: 'two-way',

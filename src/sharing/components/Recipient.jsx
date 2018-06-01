@@ -21,6 +21,12 @@ const Avatar = ({ name }) => {
   )
 }
 
+export const RecipientsAvatars = ({ recipients }) => (
+  <div className={styles['pho-recipients-avatars']}>
+    {recipients.map(({ name }) => <Avatar name={name} />)}
+  </div>
+)
+
 const Identity = ({ name, url }) => (
   <div className={styles['pho-recipient-idents']}>
     <div className={styles['pho-recipient-user']}>{name}</div>

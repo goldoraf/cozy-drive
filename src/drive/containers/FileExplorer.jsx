@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router'
 import { translate } from 'cozy-ui/react/I18n'
-
+import SharingProvider from 'sharing'
 import {
   toggleItemSelection,
   isSelectionBarVisible,
@@ -64,7 +64,11 @@ class FileExplorer extends Component {
 
   render() {
     const { children, ...props } = this.props
-    return React.cloneElement(React.Children.only(children), props)
+    return (
+      <SharingProvider doctype="io.cozy.files" documentType="Files">
+        {React.cloneElement(React.Children.only(children), props)}
+      </SharingProvider>
+    )
   }
 }
 

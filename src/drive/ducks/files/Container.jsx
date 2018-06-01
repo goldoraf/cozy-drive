@@ -3,6 +3,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { translate } from 'cozy-ui/react/I18n'
 import confirm from '../../lib/confirm'
+import { SharedDocument } from 'sharing'
 
 import FolderView from '../../components/FolderView'
 import DeleteConfirm from '../../components/DeleteConfirm'
@@ -35,9 +36,7 @@ const mapStateToProps = (state, ownProps) => ({
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => {
-  // const hasWriteAccess =
-  //   !ownProps.shared.withMe || ownProps.shared.sharingType === 'master-master'
-  const hasWriteAccess = true
+  const { hasWriteAccess } = ownProps
   return {
     actions: Object.assign({}, ownProps.actions, {
       list: {
@@ -85,6 +84,17 @@ const mapDispatchToProps = (dispatch, ownProps) => {
   }
 }
 
-export default translate()(
+const ConnectedFolderView = translate()(
   connect(mapStateToProps, mapDispatchToProps)(FolderView)
 )
+
+const FolderViewWithSharingContext = props =>
+  !props.displayedFolder ? null : (
+    <SharedDocument docId={props.displayedFolder.id}>
+      {({ hasWriteAccess }) => (
+        <ConnectedFolderView {...props} hasWriteAccess={hasWriteAccess} />
+      )}
+    </SharedDocument>
+  )
+
+export default FolderViewWithSharingContext
